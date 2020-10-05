@@ -1,5 +1,7 @@
 package net.nowtryz.mapreduce;
 
+import net.nowtryz.mapreduce.mapper.Mapper;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,19 +39,6 @@ public class Coordinator {
     }
 
     private static CompletableFuture<Map<String, Integer>> mapper(String line) {
-        return CompletableFuture.completedFuture(countWords(line));
-    }
-
-    private static Map<String, Integer> countWords(String line) {
-        String[] words = line.toLowerCase().split("[ ,’'.!()?-]+");
-
-        Map<String, Integer> map = new HashMap<>();
-
-        for (String word : words) {
-            int count = map.getOrDefault(word, 0);
-            map.put(word, count + 1);
-        }
-
-        return map;
+        return CompletableFuture.completedFuture(Mapper.countWords(line));
     }
 }
