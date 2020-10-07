@@ -2,10 +2,7 @@ package net.nowtryz.mapreduce.client;
 
 import lombok.extern.log4j.Log4j2;
 import net.nowtryz.mapreduce.mapper.Mapper;
-import net.nowtryz.mapreduce.packets.MapPacket;
-import net.nowtryz.mapreduce.packets.MapResultPacket;
-import net.nowtryz.mapreduce.packets.Packet;
-import net.nowtryz.mapreduce.packets.ShutdownPacket;
+import net.nowtryz.mapreduce.packets.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -82,12 +79,16 @@ public class NodeClient extends Thread {
             Packet packet = (Packet) this.in.readObject();
             log.debug("Received packet from coordinator");
 
-            if (MapPacket.class.equals(packet.getClass())) {
-                this.map((MapPacket) packet);
-            } else if (ShutdownPacket.class.equals(packet.getClass())) {
+            if (ShutdownPacket.class.equals(packet.getClass())) {
                 this.running = false;
+                //noinspection UnnecessaryReturnStatement
                 return;
+            } else if (MapPacket.class.equals(packet.getClass())) {
+                this.map((MapPacket) packet);
+            } else if (ReducePacket.class.equals(packet.getClass())){
+                //quand c'est un packet reduce on appel la fonction reduce()
             }
+
         } catch (ClassNotFoundException | ClassCastException exception) {
             log.error("The received message was not a Packet: " + exception.getMessage());
         }
