@@ -4,8 +4,11 @@ import lombok.extern.log4j.Log4j2;
 import net.nowtryz.mapreduce.client.NodeClient;
 import net.nowtryz.mapreduce.server.CoordinatorServer;
 import net.nowtryz.mapreduce.server.Server;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.util.IOUtils;
 
-import java.io.IOException;
+import java.io.*;
 
 @Log4j2
 public class EntryPoint {
