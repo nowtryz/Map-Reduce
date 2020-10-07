@@ -12,7 +12,7 @@ public class EntryPoint {
     private static final String USAGE = "You must specify the mode: either `server`or `node`";
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.out.println(USAGE);
+            log.warn(USAGE);
         } else try {
             switch (args[0].toLowerCase()) {
                 case "node":
@@ -22,7 +22,7 @@ public class EntryPoint {
                     Server.start(CoordinatorServer.DEFAULT_PORT);
                     break;
                 default:
-                    System.out.println(USAGE);
+                    log.warn(USAGE);
             }
         } catch (IOException exception) {
             log.fatal("Unable to start the program: " + exception.getMessage());

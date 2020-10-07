@@ -52,7 +52,7 @@ public class Server {
 
             log.info("=============================================");
             log.info("Compute complete:");
-            log.info(counts);
+            counts.forEach((s, i) -> log.info(String.format("`%s`: %d", s, i.get())));
             log.info("=============================================");
 
         } catch (IOException exception) {
