@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +16,7 @@ public class Coordinator {
     public static void main(String[] args) {
         String fileName = args[0];
         Path path = Paths.get(fileName);
+
 
         try (Stream<String> stream = Files.lines(path)) {
             Map<String, AtomicInteger> counts = new ConcurrentHashMap<>();
@@ -39,6 +39,6 @@ public class Coordinator {
     }
 
     private static CompletableFuture<Map<String, Integer>> mapper(String line) {
-        return CompletableFuture.completedFuture(Mapper.countWords(line));
+        return CompletableFuture.completedFuture(Mapper.countWords(Mapper.explodeLine(line)));
     }
 }
