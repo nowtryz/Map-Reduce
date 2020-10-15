@@ -87,6 +87,7 @@ public class NodeClient extends Thread {
                 this.map((MapPacket) packet);
             } else if (ReducePacket.class.equals(packet.getClass())){
                 //quand c'est un packet reduce on appel la fonction reduce()
+
             }
 
         } catch (ClassNotFoundException | ClassCastException exception) {

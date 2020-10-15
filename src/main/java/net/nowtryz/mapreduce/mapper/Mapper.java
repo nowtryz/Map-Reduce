@@ -24,6 +24,6 @@ public class Mapper {
     public static String[] explodeLine(String line) {
         return line
                 .toLowerCase()
-                .split("[ ,’'.!()?-]+");
+                .split("[\\s,:;’'.!()?-]+");
     }
 }
