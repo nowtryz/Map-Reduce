@@ -5,6 +5,6 @@ import lombok.Value;
 import java.util.UUID;
 
 @Value
-public class ShutdownPacket implements Packet {
-    UUID requestId;
+public class ShutdownPacket implements Packet.RequestPacket {
+    UUID requestId = UUID.randomUUID();
 }

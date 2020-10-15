@@ -3,6 +3,8 @@ package net.nowtryz.mapreduce.server;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.nowtryz.mapreduce.packets.Packet;
+import net.nowtryz.mapreduce.packets.Packet.ResultPacket;
+import net.nowtryz.mapreduce.packets.ShutdownPacket;
 import net.nowtryz.mapreduce.request.Request;
 import net.nowtryz.mapreduce.request.Response;
 
@@ -57,7 +59,7 @@ public class NodeDaemon {
 
     private void read() throws IOException {
         try {
-            Packet packet = (Packet) this.in.readObject();
+            ResultPacket packet = (ResultPacket) this.in.readObject();
             log.debug("Received packet from node " + this.uuid);
 
             new Thread(
@@ -69,28 +71,35 @@ public class NodeDaemon {
         }
     }
 
-    private void handlePacket(Packet packet) {
+    private void handlePacket(ResultPacket packet) {
         Request request = this.requests.remove(packet.getRequestId());
-        if (request == null) log.error("No response was expected from the client");
 
         synchronized (this.requests) {
             if (this.requests.isEmpty()) this.server.nodeReady(this);
         }
 
-        request.getFuture().complete(new Response(packet, request));
+        if (request == null) log.error("No response was expected from the client");
+        else request.getFuture().complete(new Response(packet, request));
     }
 
     /**
      * Send the packet of the request
      * @param request the request to perform
-     * @return the given request
      * @throws IOException if an exception occurred while sending the packet
      */
-    public Request sendRequest(Request request) throws IOException {
-        this.out.writeObject(request.getPacket());
-        this.out.flush();
+    public void sendRequest(Request request) throws IOException {
+        this.sendPacket(request.getPacket());
         this.requests.put(request.getRequestId(), request);
-        return request;
+    }
+
+    public void stop() throws IOException {
+        this.sendPacket(new ShutdownPacket());
+        this.closeConnection();
+    }
+
+    private void sendPacket(Packet.RequestPacket packet) throws IOException {
+        this.out.writeObject(packet);
+        this.out.flush();
     }
 
     public boolean isBusy() {

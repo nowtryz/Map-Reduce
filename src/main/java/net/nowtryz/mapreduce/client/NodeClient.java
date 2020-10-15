@@ -1,7 +1,8 @@
 package net.nowtryz.mapreduce.client;
 
 import lombok.extern.log4j.Log4j2;
-import net.nowtryz.mapreduce.mapper.Mapper;
+import net.nowtryz.mapreduce.functions.Mapper;
+import net.nowtryz.mapreduce.functions.Reducer;
 import net.nowtryz.mapreduce.packets.*;
 
 import java.io.EOFException;
@@ -47,6 +48,13 @@ public class NodeClient extends Thread {
 
             if (running) log.info("Reconnecting...");
         } while (running);
+
+        if (!this.clientSocket.isClosed()) try {
+            this.stopConnection();
+        } catch (Exception exception) {
+            log.error("Unable to disconnect from server ");
+            log.debug("Caused by:", exception);
+        }
     }
 
     private void init() throws IOException {
@@ -59,7 +67,7 @@ public class NodeClient extends Thread {
 
     private void listen() {
         try {
-            while (true) {
+            while (this.running) {
                 log.debug("Waiting for new event from coordinator");
                 this.read();
             }
@@ -81,13 +89,13 @@ public class NodeClient extends Thread {
 
             if (ShutdownPacket.class.equals(packet.getClass())) {
                 this.running = false;
+                log.info("Shutdown Packet received, exiting");
                 //noinspection UnnecessaryReturnStatement
                 return;
             } else if (MapPacket.class.equals(packet.getClass())) {
                 this.map((MapPacket) packet);
             } else if (ReducePacket.class.equals(packet.getClass())){
-                //quand c'est un packet reduce on appel la fonction reduce()
-
+                this.reduce((ReducePacket) packet);
             }
 
         } catch (ClassNotFoundException | ClassCastException exception) {
@@ -103,6 +111,16 @@ public class NodeClient extends Thread {
         this.out.writeObject(new MapResultPacket(packet.getRequestId(), result));
         this.out.flush();
         log.trace("Sent: " + result);
+    }
+
+    private void reduce(ReducePacket packet) throws IOException {
+        log.trace("Starting reduction...");
+        Map<String, Integer> mapData = Reducer.reduce(packet.getData());
+
+        log.debug("Reduced chunk, sending result...");
+        this.out.writeObject(new ReduceResultPacket(packet.getRequestId(), mapData));
+        this.out.flush();
+        log.trace("Sent: " + mapData);
     }
 
     public void stopConnection() throws IOException {

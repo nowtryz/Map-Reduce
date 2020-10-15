@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 public class Request {
     Date sentDate = new Date();
     CompletableFuture<Response> future = new CompletableFuture<>();
-    Packet packet;
+    Packet.RequestPacket packet;
 
     public UUID getRequestId() {
         return this.packet.getRequestId();

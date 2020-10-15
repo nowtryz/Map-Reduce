@@ -2,20 +2,20 @@ package net.nowtryz.mapreduce.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.nowtryz.mapreduce.packets.MapPacket;
-import net.nowtryz.mapreduce.packets.MapResultPacket;
-import net.nowtryz.mapreduce.packets.Packet;
+import net.nowtryz.mapreduce.packets.*;
 import net.nowtryz.mapreduce.request.Request;
 import net.nowtryz.mapreduce.request.Response;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 
 @Log4j2
 public class CoordinatorServer {
@@ -59,19 +59,40 @@ public class CoordinatorServer {
         }
     }
 
+    public void stopAll() {
+        for (NodeDaemon client : this.clients) {
+            try {
+                client.stop();
+            } catch (Exception exception) {
+                log.error("Unable to disconnect client " + client.getUuid());
+                log.debug("Caused by:", exception);
+            }
+        }
+    }
+
     public CompletableFuture<Map<String, Integer>> startMapping(String line) {
-        return this.request(new MapPacket(line))
+        CompletableFuture<Map<String, Integer>> future = this.request(new MapPacket(line))
                 .getFuture()
                 .thenApply(Response::getReceivedPacket)
                 .thenApply(MapResultPacket.class::cast)
-                .thenApply(MapResultPacket::getResult)
-                .thenApply(map -> {
-                    log.debug("Result is: " + map);
-                    return map;
-                });
+                .thenApply(MapResultPacket::getResult);
+
+        future.thenAccept(map -> log.trace("Result is: " + map));
+        return future;
     }
 
-    private Request request(Packet packet) {
+    public CompletableFuture<Map<String, Integer>> startReduce(Map<String, List<Integer>> mapList) {
+        CompletableFuture<Map<String, Integer>> future = this.request(new ReducePacket(mapList))
+                .getFuture()
+                .thenApply(Response::getReceivedPacket)
+                .thenApply(ReduceResultPacket.class::cast)
+                .thenApply(ReduceResultPacket::getResult);
+
+        future.thenAccept(map -> log.trace("Reduce is: " + map));
+        return future;
+    }
+
+    private Request request(Packet.RequestPacket packet) {
         Request request = new Request(packet);
         this.findNodeAndSendAsync(request);
         return request;
@@ -88,7 +109,9 @@ public class CoordinatorServer {
                     request.getRequestId())
             );
 
+            // Block thread until a node is available
             NodeDaemon node = this.availableNodes.take();
+            // Node take the request from here
             node.sendRequest(request);
         } catch (IOException e) {
             log.error("An error occurred while sending the request " + request.getRequestId(), e);
@@ -112,5 +135,9 @@ public class CoordinatorServer {
         client.closeConnection();
 
         if (client.isBusy()) client.getRequests().forEach(this::findNodeAndSendAsync);
+    }
+
+    public int getPoolSize(){
+        return this.clients.size();
     }
 }

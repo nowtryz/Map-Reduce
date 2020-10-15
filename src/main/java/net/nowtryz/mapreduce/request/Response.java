@@ -9,7 +9,7 @@ import java.util.UUID;
 @Value
 public class Response {
     Date receivedDate = new Date();
-    Packet receivedPacket;
+    Packet.ResultPacket receivedPacket;
     Request request;
 
     public UUID getRequestId() {

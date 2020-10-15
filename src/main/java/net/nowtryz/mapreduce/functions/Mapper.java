@@ -1,4 +1,4 @@
-package net.nowtryz.mapreduce.mapper;
+package net.nowtryz.mapreduce.functions;
 
 import java.util.Arrays;
 import java.util.Map;

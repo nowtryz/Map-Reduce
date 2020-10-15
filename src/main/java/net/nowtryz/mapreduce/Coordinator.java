@@ -1,6 +1,6 @@
 package net.nowtryz.mapreduce;
 
-import net.nowtryz.mapreduce.mapper.Mapper;
+import net.nowtryz.mapreduce.functions.Mapper;
 
 import java.io.IOException;
 import java.nio.file.Files;

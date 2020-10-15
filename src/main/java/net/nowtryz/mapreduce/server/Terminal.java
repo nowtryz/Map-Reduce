@@ -17,8 +17,13 @@ public class Terminal {
     public void readInputs() {
         while (true) {
             String filename = scanner.nextLine();
-            File file = new File(filename);
 
+            if (filename == null || filename.equalsIgnoreCase("stop") || filename.equalsIgnoreCase("exit")) {
+                this.server.stop();
+                break;
+            }
+
+            File file = new File(filename);
             if (!file.exists()) log.error(String.format("`%s` does not exist", filename));
             else if (file.isDirectory()) log.error(String.format("`%s` is a directory", filename));
             else if (!file.canRead()) log.error(String.format("Cannot open `%s`", filename));

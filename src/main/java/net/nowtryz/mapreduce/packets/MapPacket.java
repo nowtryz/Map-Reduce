@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Value
 @RequiredArgsConstructor
-public class MapPacket implements Packet {
+public class MapPacket implements Packet.RequestPacket {
     UUID requestId = UUID.randomUUID();
     String line;
 }

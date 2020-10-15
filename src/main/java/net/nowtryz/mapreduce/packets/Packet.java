@@ -5,4 +5,7 @@ import java.util.UUID;
 
 public interface Packet extends Serializable {
     UUID getRequestId();
+
+    interface RequestPacket extends Packet {}
+    interface ResultPacket extends  Packet {}
 }
