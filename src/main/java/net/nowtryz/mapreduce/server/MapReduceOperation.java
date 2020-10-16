@@ -4,13 +4,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +19,7 @@ import static net.nowtryz.mapreduce.utils.FileSizeUtils.toHumanReadableSize;
 @Log4j2
 @RequiredArgsConstructor
 public class MapReduceOperation {
+    private final static byte SPACE = (byte) ' ';
     private final CoordinatorServer coordinatorServer;
     private final File file;
 
@@ -36,13 +33,56 @@ public class MapReduceOperation {
     }
 
     private List<Map<String, Integer>> map() throws IOException, CompletionException {
-        try (Stream<String> stream = Files.lines(file.toPath())) {
-            return stream
-                    .parallel()
-                    .map(this.coordinatorServer::startMapping)
+        List<CompletableFuture<Map<String, Integer>>> completableFutures = new LinkedList<>();
+        int chunkCount = this.coordinatorServer.getPoolSize()*2;
+        long chunkSize = this.file.length()/chunkCount;
+        int red;
+
+        log.info("Will try to create {} chunks with approximated size of {}", chunkCount, toHumanReadableSize(chunkSize));
+
+        try (
+                FileInputStream fis = new FileInputStream(this.file);
+                InputStream input = new BufferedInputStream(fis)
+        ) {
+            //faire la boucle pour tout le fichier
+            while (true) {
+                List<Byte> byteList = new ArrayList<>();
+                byte[] buffer = new byte[(int)chunkSize];
+
+                red = input.read(buffer);
+                for (byte b : buffer) byteList.add(b);
+
+                //casser si red < buffer
+                if (red<buffer.length) {
+                    completableFutures.add(this.sendMapRequest(byteList));
+                    break;
+                }
+
+                if (red == chunkSize) {
+                    byte[] bufferTemp = new byte[1];
+                    do {
+                        red = input.read(bufferTemp);
+                        if (red > 0) byteList.add(bufferTemp[0]);
+                    } while (red > 0 && bufferTemp[0] != SPACE);
+                    completableFutures.add(this.sendMapRequest(byteList));
+                } else {
+                    completableFutures.add(this.sendMapRequest(byteList));
+                    break;
+                }
+            }
+
+            log.info("Sent {} chunks", completableFutures.size());
+
+            return completableFutures.parallelStream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
         }
+    }
+
+    private CompletableFuture<Map<String, Integer>> sendMapRequest(List<Byte> byteList) {
+        byte[] bytes = new byte[byteList.size()];
+        for (int i = 0; i < byteList.size(); i++) bytes[i] = byteList.get(i);
+        return this.coordinatorServer.startMapping(new String(bytes));
     }
 
     private Map<String, Integer> reduce(List<Map<String, Integer>> mapList) throws CompletionException {
