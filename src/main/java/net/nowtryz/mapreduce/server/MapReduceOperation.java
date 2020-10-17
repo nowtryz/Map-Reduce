@@ -19,6 +19,7 @@ import static net.nowtryz.mapreduce.utils.FileSizeUtils.toHumanReadableSize;
 @Log4j2
 @RequiredArgsConstructor
 public class MapReduceOperation {
+    private final static int MAX_CHUNK_SIZE = 600*1024; // 600 KiB
     private final static byte SPACE = (byte) ' ';
     private final CoordinatorServer coordinatorServer;
     private final File file;
@@ -34,8 +35,11 @@ public class MapReduceOperation {
 
     private List<Map<String, Integer>> map() throws IOException, CompletionException {
         List<CompletableFuture<Map<String, Integer>>> completableFutures = new LinkedList<>();
-        int chunkCount = this.coordinatorServer.getPoolSize()*2;
-        long chunkSize = this.file.length()/chunkCount;
+        int chunkSize = Math.min(
+                (int) (this.file.length() / this.coordinatorServer.getPoolSize() / 2),
+                MAX_CHUNK_SIZE
+        );
+        int chunkCount = (int) (this.file.length() / chunkSize);
         int red;
 
         log.info("Will try to create {} chunks with approximated size of {}", chunkCount, toHumanReadableSize(chunkSize));
@@ -47,7 +51,7 @@ public class MapReduceOperation {
             //faire la boucle pour tout le fichier
             while (true) {
                 List<Byte> byteList = new ArrayList<>();
-                byte[] buffer = new byte[(int)chunkSize];
+                byte[] buffer = new byte[chunkSize];
 
                 red = input.read(buffer);
                 for (byte b : buffer) byteList.add(b);
