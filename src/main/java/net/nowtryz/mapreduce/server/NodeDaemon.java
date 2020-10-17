@@ -79,7 +79,7 @@ public class NodeDaemon {
         }
 
         if (request == null) log.error("No response was expected from the client");
-        else request.getFuture().complete(new Response(packet, request));
+        else request.getFuture().complete(new Response(request.getRequestId(), packet));
     }
 
     /**

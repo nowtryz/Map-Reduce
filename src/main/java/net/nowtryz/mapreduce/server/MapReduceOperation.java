@@ -5,14 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static net.nowtryz.mapreduce.utils.FileSizeUtils.toHumanReadableSize;
 
@@ -40,39 +38,45 @@ public class MapReduceOperation {
                 MAX_CHUNK_SIZE
         );
         int chunkCount = (int) (this.file.length() / chunkSize);
-        int red;
 
         log.info("Will try to create {} chunks with approximated size of {}", chunkCount, toHumanReadableSize(chunkSize));
+
+        // Create buffer outside of loop to save memory
+        byte[] buffer = new byte[chunkSize];
+        int read;
 
         try (
                 FileInputStream fis = new FileInputStream(this.file);
                 InputStream input = new BufferedInputStream(fis)
         ) {
-            //faire la boucle pour tout le fichier
+            // Read each chunk from file
             while (true) {
+                // TODO wait until some nodes are available to minimize memory impact
+
+                // Clear buffer
+                Arrays.fill(buffer, (byte) 0);
                 List<Byte> byteList = new ArrayList<>();
-                byte[] buffer = new byte[chunkSize];
 
-                red = input.read(buffer);
-                for (byte b : buffer) byteList.add(b);
+                // read desired chunk size
+                read = input.read(buffer);
 
-                //casser si red < buffer
-                if (red<buffer.length) {
-                    completableFutures.add(this.sendMapRequest(byteList));
+                // Break if end of file
+                if (read < buffer.length) {
+                    completableFutures.add(this.sendMapRequest(buffer, byteList));
                     break;
                 }
 
-                if (red == chunkSize) {
-                    byte[] bufferTemp = new byte[1];
-                    do {
-                        red = input.read(bufferTemp);
-                        if (red > 0) byteList.add(bufferTemp[0]);
-                    } while (red > 0 && bufferTemp[0] != SPACE);
-                    completableFutures.add(this.sendMapRequest(byteList));
-                } else {
-                    completableFutures.add(this.sendMapRequest(byteList));
-                    break;
-                }
+                // Loop to get the end of the last word
+                byte[] bufferTemp = new byte[1];
+                do {
+                    read = input.read(bufferTemp);
+                    if (read == 0 || bufferTemp[0] == SPACE) break;
+                    if (read > 0) byteList.add(bufferTemp[0]);
+                } while (true);
+                completableFutures.add(this.sendMapRequest(buffer, byteList));
+
+                // Break if end of file
+                if (read == 0) break;
             }
 
             log.info("Sent {} chunks", completableFutures.size());
@@ -83,9 +87,11 @@ public class MapReduceOperation {
         }
     }
 
-    private CompletableFuture<Map<String, Integer>> sendMapRequest(List<Byte> byteList) {
-        byte[] bytes = new byte[byteList.size()];
-        for (int i = 0; i < byteList.size(); i++) bytes[i] = byteList.get(i);
+    private CompletableFuture<Map<String, Integer>> sendMapRequest(byte[] buffer, List<Byte> byteList) {
+        if (byteList.size() == 0)  return this.coordinatorServer.startMapping(new String(buffer));
+
+        byte[] bytes = Arrays.copyOf(buffer, buffer.length + byteList.size());
+        for (int i = buffer.length; i < byteList.size(); i++) bytes[i + buffer.length] = byteList.get(i);
         return this.coordinatorServer.startMapping(new String(bytes));
     }
 
