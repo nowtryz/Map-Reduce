@@ -2,11 +2,13 @@ package net.nowtryz.mapreduce.server;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import net.nowtryz.mapreduce.packets.HelloPacket;
 import net.nowtryz.mapreduce.packets.Packet;
 import net.nowtryz.mapreduce.packets.Packet.ResultPacket;
 import net.nowtryz.mapreduce.packets.ShutdownPacket;
 import net.nowtryz.mapreduce.request.Request;
 import net.nowtryz.mapreduce.request.Response;
+import net.nowtryz.mapreduce.utils.FileSizeUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,8 +32,10 @@ public class NodeDaemon {
     private final CoordinatorServer server;
 
     private final Map<UUID, Request> requests = new HashMap<>();
+    private Thread connectionThread;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private String name = "Unknown";
 
     public NodeDaemon(CoordinatorServer server, Socket socket) {
         this.server = server;
@@ -42,14 +46,36 @@ public class NodeDaemon {
         this.out = new ObjectOutputStream(this.socket.getOutputStream());
         this.in = new ObjectInputStream(this.socket.getInputStream());
 
-        log.info(String.format("Node %s joined the cluster", this.uuid));
-        new Thread(this::listen, "NodeDaemon-" + this.id).start();
+        log.debug(String.format("New connection (%s)", this.uuid));
+        this.connectionThread = new Thread(this::listen, "NodeDaemon-" + this.id);
+        this.connectionThread.start();
 
     }
 
     private void listen() {
-        log.info("Listening");
+
+
         try {
+            try {
+                log.debug("Waiting for hand-check from " + this.uuid);
+                HelloPacket handCheck = (HelloPacket) this.in.readObject();
+                this.name = handCheck.getName();
+
+                log.info(
+                        "Node {} joined the cluster ({} CPU, {} ram)",
+                        this.name,
+                        handCheck.getCpuNumber(),
+                        FileSizeUtils.toHumanReadableSize(handCheck.getRamNumber())
+                );
+
+                this.connectionThread.setName("NodeDaemon-" + this.name + "-" + this.id);
+
+            } catch (ClassNotFoundException | ClassCastException e) {
+                log.error(e);
+                return;
+            }
+
+            log.info("Listening");
             while (true) this.read();
         } catch (IOException exception) {
             this.server.disconnect(this);
