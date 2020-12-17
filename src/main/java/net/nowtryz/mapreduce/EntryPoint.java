@@ -7,7 +7,6 @@ import net.nowtryz.mapreduce.server.MapReduceOperation;
 import net.nowtryz.mapreduce.server.Server;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import java.io.IOException;
@@ -19,7 +18,7 @@ public class EntryPoint {
     private static final HelpFormatter formatter = new HelpFormatter();
     private static final Options options = new Options()
             .addOption("h", "help", false, "Show this help message")
-            .addOption("S", "server-mode", false, "sets the node's moder to server")
+            .addOption("S", "server-mode", false, "sets the node's mode to server (defaults to false)")
             .addOption("d", "debug", false, "Show debug information")
             .addOption("v", "verbose", false, "Show trace information (i.e. any log possible")
             .addOption(Option.builder("C")
