@@ -4,6 +4,9 @@ import lombok.extern.log4j.Log4j2;
 import net.nowtryz.mapreduce.functions.Mapper;
 import net.nowtryz.mapreduce.functions.Reducer;
 import net.nowtryz.mapreduce.packets.*;
+import static net.nowtryz.mapreduce.utils.HostUtil.getHostName;
+import static net.nowtryz.mapreduce.utils.HostUtil.getCpuNumber;
+import static net.nowtryz.mapreduce.utils.HostUtil.getRamNumber;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -63,6 +66,10 @@ public class NodeClient extends Thread {
 
         this.out = new ObjectOutputStream(this.clientSocket.getOutputStream());
         this.in = new ObjectInputStream(this.clientSocket.getInputStream());
+        //envoyer le helloPacket
+        HelloPacket helloPacket = new HelloPacket(getHostName(),getCpuNumber(),getRamNumber());
+        this.out.writeObject(helloPacket);
+        
     }
 
     private void listen() {

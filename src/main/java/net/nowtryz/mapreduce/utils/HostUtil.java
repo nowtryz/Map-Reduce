@@ -3,7 +3,7 @@ package net.nowtryz.mapreduce.utils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class HostNameUtil {
+public class HostUtil {
     public static String getHostName() {
 
         // try InetAddress.LocalHost first;
@@ -28,4 +28,14 @@ public class HostNameUtil {
         // undetermined.
         return null;
     }
+
+    public static Integer getCpuNumber() {
+
+        return Runtime.getRuntime().availableProcessors();
+    }
+
+    public static Long getRamNumber(){
+        return Runtime.getRuntime().freeMemory();
+    }
+
 }
