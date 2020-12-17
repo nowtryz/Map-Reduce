@@ -5,6 +5,7 @@ import net.nowtryz.mapreduce.client.NodeClient;
 import net.nowtryz.mapreduce.server.CoordinatorServer;
 import net.nowtryz.mapreduce.server.MapReduceOperation;
 import net.nowtryz.mapreduce.server.Server;
+import net.nowtryz.mapreduce.utils.HostUtil;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -21,11 +22,16 @@ public class EntryPoint {
             .addOption("S", "server-mode", false, "sets the node's mode to server (defaults to false)")
             .addOption("d", "debug", false, "Show debug information")
             .addOption("v", "verbose", false, "Show trace information (i.e. any log possible")
+            .addOption(Option.builder()
+                    .longOpt("name")
+                    .desc("Client name, defaults to computer name")
+                    .hasArg()
+                    .argName("NAME")
+                    .build())
             .addOption(Option.builder("C")
                     .longOpt("max-chunk-size")
                     .desc("In server mode, limit chunks to SIZE")
                     .hasArg()
-                    .valueSeparator()
                     .argName("SIZE")
                     .type(PatternOptionBuilder.NUMBER_VALUE)
                     .build())
@@ -76,6 +82,8 @@ public class EntryPoint {
                 .orElse(CoordinatorServer.DEFAULT_PORT);
         String host = Optional.ofNullable(commandLine.getOptionValue("host"))
                 .orElse("localhost");
+        String name = Optional.ofNullable(commandLine.getOptionValue("name"))
+                .orElseGet(HostUtil::getHostName);
 
         if (commandLine.hasOption("verbose")) {
             Configurator.setRootLevel(Level.TRACE);
@@ -89,7 +97,7 @@ public class EntryPoint {
 
         try {
             if (commandLine.hasOption("server-mode")) Server.start(port, maxChunkSize);
-            else new NodeClient(host, port).start();
+            else new NodeClient(host, port, name).start();
         } catch (IOException exception) {
             log.fatal("Unable to start the program: " + exception.getMessage());
         }

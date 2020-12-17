@@ -4,7 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import net.nowtryz.mapreduce.functions.Mapper;
 import net.nowtryz.mapreduce.functions.Reducer;
 import net.nowtryz.mapreduce.packets.*;
-import static net.nowtryz.mapreduce.utils.HostUtil.getHostName;
+
 import static net.nowtryz.mapreduce.utils.HostUtil.getCpuNumber;
 import static net.nowtryz.mapreduce.utils.HostUtil.getRamNumber;
 
@@ -20,15 +20,17 @@ import java.util.Map;
 public class NodeClient extends Thread {
     private final String ip;
     private final int port;
+    private final String hostName;
     private boolean running = true;
     private Socket clientSocket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    public NodeClient(String ip, int port) {
+    public NodeClient(String ip, int port, String hostName) {
         this.ip = ip;
         this.port = port;
         this.setName("Client");
+        this.hostName = hostName;
     }
 
     @Override
@@ -67,9 +69,9 @@ public class NodeClient extends Thread {
         this.out = new ObjectOutputStream(this.clientSocket.getOutputStream());
         this.in = new ObjectInputStream(this.clientSocket.getInputStream());
         //envoyer le helloPacket
-        HelloPacket helloPacket = new HelloPacket(getHostName(),getCpuNumber(),getRamNumber());
+        HelloPacket helloPacket = new HelloPacket(this.hostName,getCpuNumber(),getRamNumber());
         this.out.writeObject(helloPacket);
-        
+
     }
 
     private void listen() {

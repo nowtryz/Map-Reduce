@@ -62,13 +62,13 @@ public class NodeDaemon {
                 this.name = handCheck.getName();
 
                 log.info(
-                        "Node {} joined the cluster ({} CPU, {} ram)",
+                        "Node {} joined the cluster ({} CPU | {} RAM)",
                         this.name,
                         handCheck.getCpuNumber(),
                         FileSizeUtils.toHumanReadableSize(handCheck.getRamNumber())
                 );
 
-                this.connectionThread.setName("NodeDaemon-" + this.name + "-" + this.id);
+                this.connectionThread.setName(this.name + "-" + this.id);
 
             } catch (ClassNotFoundException | ClassCastException e) {
                 log.error(e);
