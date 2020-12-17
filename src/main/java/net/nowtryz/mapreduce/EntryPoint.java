@@ -6,6 +6,9 @@ import net.nowtryz.mapreduce.server.CoordinatorServer;
 import net.nowtryz.mapreduce.server.MapReduceOperation;
 import net.nowtryz.mapreduce.server.Server;
 import org.apache.commons.cli.*;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -17,6 +20,8 @@ public class EntryPoint {
     private static final Options options = new Options()
             .addOption("h", "help", false, "Show this help message")
             .addOption("S", "server-mode", false, "sets the node's moder to server")
+            .addOption("d", "debug", false, "Show debug information")
+            .addOption("v", "verbose", false, "Show trace information (i.e. any log possible")
             .addOption(Option.builder("C")
                     .longOpt("max-chunk-size")
                     .desc("In server mode, limit chunks to SIZE")
@@ -73,8 +78,18 @@ public class EntryPoint {
         String host = Optional.ofNullable(commandLine.getOptionValue("host"))
                 .orElse("localhost");
 
+        if (commandLine.hasOption("verbose")) {
+            Configurator.setRootLevel(Level.TRACE);
+            log.info("Trace mode enabled");
+        } else if (commandLine.hasOption("debug")) {
+            Configurator.setRootLevel(Level.DEBUG);
+            log.info("Debug mode enabled");
+        } else {
+            Configurator.setRootLevel(Level.INFO);
+        }
+
         try {
-            if (commandLine.hasOption('S')) Server.start(port, maxChunkSize);
+            if (commandLine.hasOption("server-mode")) Server.start(port, maxChunkSize);
             else new NodeClient(host, port).start();
         } catch (IOException exception) {
             log.fatal("Unable to start the program: " + exception.getMessage());
