@@ -14,14 +14,16 @@ import java.util.concurrent.CompletionException;
 public class Server {
     private final CoordinatorServer coordinatorServer;
     private final Terminal terminal;
+    private final int maxChunkSize;
 
-    public static void start(int port) throws IOException {
-        new Server(port).init();
+    public static void start(int port, int maxChunkSize) throws IOException {
+        new Server(port, maxChunkSize).init();
     }
 
-    private Server(int port) {
+    private Server(int port, int maxChunkSize) {
         this.coordinatorServer = new CoordinatorServer(port);
         this.terminal = new Terminal(this);
+        this.maxChunkSize = maxChunkSize;
     }
 
     private void init() throws IOException {
@@ -37,7 +39,7 @@ public class Server {
     }
 
     void computeFile(File file) {
-        MapReduceOperation operation = new MapReduceOperation(this.coordinatorServer, file);
+        MapReduceOperation operation = new MapReduceOperation(this.coordinatorServer, file, this.maxChunkSize);
 
         try {
             Map<String, Integer> counts = operation.compute();

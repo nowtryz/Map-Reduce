@@ -17,10 +17,11 @@ import static net.nowtryz.mapreduce.utils.FileSizeUtils.toHumanReadableSize;
 @Log4j2
 @RequiredArgsConstructor
 public class MapReduceOperation {
-    private final static int MAX_CHUNK_SIZE = 600*1024; // 600 KiB
+    public final static int DEFAULT_MAX_CHUNK_SIZE = 600*1024; // 600 KiB
     private final static byte SPACE = (byte) ' ';
     private final CoordinatorServer coordinatorServer;
     private final File file;
+    private final int maxChunkSize;
 
     private int bucketCount = 1;
 
@@ -35,7 +36,7 @@ public class MapReduceOperation {
         List<CompletableFuture<Map<String, Integer>>> completableFutures = new LinkedList<>();
         int chunkSize = Math.min(
                 (int) (this.file.length() / this.coordinatorServer.getPoolSize() / 2),
-                MAX_CHUNK_SIZE
+                this.maxChunkSize
         );
         int chunkCount = (int) (this.file.length() / chunkSize);
 
