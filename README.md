@@ -29,3 +29,8 @@ reduce.
 Pour tester votre plateforme vous pouvez prendre des pages web
 quelconques. Testez votre plateforme en variant le nombre de machines
 travaillant en parallèle et observez (mesurez) les effets.
+
+##Diagramms
+
+Class diagram : 
+![Class diagram](UMLClassDiagram.png)
