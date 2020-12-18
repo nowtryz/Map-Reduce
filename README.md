@@ -34,4 +34,4 @@ travaillant en parallèle et observez (mesurez) les effets.
 
 Class diagram : 
 
-![Class diagram](UMLClassDiagram.png)
+![Class diagram](UMLDiagramClass.png)
