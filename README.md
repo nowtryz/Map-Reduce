@@ -19,9 +19,9 @@ chacun des ces mots, le nombre total d’occurrences.
 
 Le niveau de difficulté peut se « régler » :
 
-  -En fixant ou non de nombreux paramètres comme : le nombre de taches maps, la répartition des mots sur les taches reduces
-  -En prenant en compte ou non les fautes de taches map et réduce… (monitoring + relance / exécution spéclative…)
-  -Selon le niveau d’implémentation (socket/rmi/mono-processus multithreadé…)
+  - En fixant ou non de nombreux paramètres comme : le nombre de taches maps, la répartition des mots sur les taches reduces
+  - En prenant en compte ou non les fautes de taches map et réduce… (monitoring + relance / exécution spéclative…)
+  - Selon le niveau d’implémentation (socket/rmi/mono-processus multithreadé…)
 
 Aide : utilisez un nœud coordinateur pour lancer les taches map et
 reduce.
