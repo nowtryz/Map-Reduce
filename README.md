@@ -32,6 +32,10 @@ travaillant en parallèle et observez (mesurez) les effets.
 
 ## Diagrams
 
+Exemple du Map Reduce :
+
+![Exemple Map Reduce](ExempleMapReduce.png)
+
 Class diagram : 
 
 ![Class diagram](UMLDiagramClass.png)
